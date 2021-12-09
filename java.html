@@ -1,0 +1,158 @@
+<script>
+  function getFiles(clicked_id){
+    document.getElementById('welcome').hidden = true;
+
+    document.getElementById('loading').hidden=false
+    var subject = clicked_id;
+    if(subject=="Math"){
+      document.getElementById('MathV').hidden=false;
+      document.getElementById('PhysicsV').hidden=true;
+      document.getElementById('BEEV').hidden=true;
+      document.getElementById('EDV').hidden=true;
+      document.getElementById('EnglishV').hidden=true;
+    }else if(subject=="Physics"){
+        document.getElementById('MathV').hidden=true;
+      document.getElementById('PhysicsV').hidden=false;
+      document.getElementById('BEEV').hidden=true;
+      document.getElementById('EDV').hidden=true;
+      document.getElementById('EnglishV').hidden=true;
+    }else if(subject=="BEE"){
+        document.getElementById('MathV').hidden=true;
+      document.getElementById('PhysicsV').hidden=true;
+      document.getElementById('BEEV').hidden=false;
+      document.getElementById('EDV').hidden=true;
+      document.getElementById('EnglishV').hidden=true;
+    }else if(subject=="ED"){
+        document.getElementById('MathV').hidden=true;
+      document.getElementById('PhysicsV').hidden=true;
+      document.getElementById('BEEV').hidden=true;
+      document.getElementById('EDV').hidden=false;
+      document.getElementById('EnglishV').hidden=true;
+    }else if(subject=="English"){
+        document.getElementById('MathV').hidden=true;
+      document.getElementById('PhysicsV').hidden=true;
+      document.getElementById('BEEV').hidden=true;
+      document.getElementById('EDV').hidden=true;
+      document.getElementById('EnglishV').hidden=false;
+    }
+    google.script.run.withSuccessHandler(setFiles).getFilesData(subject);
+  }
+
+  function showView(){
+    document.getElementById('welcome').hidden = true;
+
+    document.getElementById('uploadPage').innerHTML ='';
+    document.getElementById('viewPage').hidden = false;
+  }
+
+  function setFiles(Data){
+    console.log(Data,Data[0]+'V')
+    document.getElementById('welcome').hidden = true;
+
+    document.getElementById('loading').hidden=true
+    document.getElementById(Data[0]+'V').innerHTML = ''
+    for(var i = 0 ; i < Data[1].length ; i++){
+      document.getElementById(Data[0]+'V').innerHTML += '<div class="col m-1"><div class="card text-center">  <div class="card-body"><h1 class="card-title">📝</h1><p class="card-text">'+Data[1][i][2]+'</p><button id="'+Data[1][i][3]+'" class="btn btn-primary" onclick="downloadPdf(this.id)" >Download</button><p class="card-text"><small class="text-muted">on '+Data[1][i][4]+' by '+Data[1][i][0]+'</small></p>  </div></div></div>';  }
+  }
+
+  function makeUpload(){
+    document.getElementById('welcome').hidden = true;
+
+    document.getElementById('MathV').hidden=true;
+      document.getElementById('PhysicsV').hidden=true;
+      document.getElementById('BEEV').hidden=true;
+      document.getElementById('EDV').hidden=true;
+      document.getElementById('EnglishV').hidden=true;
+    document.getElementById('viewPage').hidden = true;
+    document.getElementById('uploadPage').innerHTML ='<div class="m-2"><form onsubmit="uploadFile(this)"><input type="text" class="form-control mt-2" id="userName" placeholder="Your name ✍️" required/><input type="text" class="form-control mt-2" id="userRoll" placeholder="Roll no. 🔢" required maxlength="5" minlength="5"/><input type="text" class="form-control mt-2" id="title" placeholder="Topic ✍️" maxlength="15" required/><select class="form-control mt-2" id="subject"><option disabled selected>Subject</option><option>Math</option><option>Physics</option><option>BEE</option><option>Engish</option><option>ED</option></select><center class="p-3"><input class="form-control" id="files" type="file" onchange="updateFileDrive()" accept="application/pdf" required/><lable id="lable" hidden>Uploading.. ⌛</lable></center><center><input type="submit" class="btn btn-warning" id="saveBt" value="💾Save" disabled/></center></form></div>'
+  }
+
+  function downloadPdf(clicked_id){
+    var id = clicked_id;
+    console.log("id",id)
+    google.script.run.withSuccessHandler(serverResponseHandler).getPdfBlob(id);
+    document.getElementById('welcome').hidden = true;
+
+  }
+
+  function serverResponseHandler(data){
+    const linkSource = `data:application/pdf;base64,${data[1]}`;
+    const downloadLink = document.createElement("a");
+    const fileName = data[0];
+    downloadLink.href = linkSource;
+    downloadLink.download = fileName;
+    downloadLink.click();
+    document.getElementById('welcome').hidden = true;
+
+  }
+
+  var file, reader = new FileReader();
+  var success = 0
+  reader.onloadend = function(e) {
+    if (e.target.error != null) {
+    console.log("File " + file.name + " could not be read.");
+    return;
+  }
+  else {
+    google.script.run
+    .withSuccessHandler(showSuccess)
+    .uploadFileToGoogleDrive(e.target.result, file.name, $('#name').val());
+    }
+    document.getElementById('welcome').hidden = true;
+
+  };
+
+  function updateFileDrive(){
+    var files = $('#files')[0].files;
+    if (files.length >= 0) {
+      file = files[0];
+      console.log("Uploading file..");
+      reader.readAsDataURL(file);
+    document.getElementById('saveBt').disabled = true;
+    document.getElementById('lable').hidden = false;
+
+    }
+    document.getElementById('welcome').hidden = true;
+
+  }
+
+  function showSuccess(id) {
+    if (id) { 
+      localStorage.setItem("fileid",id)
+      console.log(id)
+    document.getElementById('saveBt').disabled = false;
+    document.getElementById('lable').hidden = true;
+
+    } else {
+       console.log("error");
+    }
+    document.getElementById('welcome').hidden = true;
+
+  }
+
+  function uploadFile(e){
+    var id = localStorage.getItem('fileid');
+    var dd = new Date();
+    var time = dd.getDate()+"."+dd.getMonth()+"."+dd.getFullYear();
+    var data = [[userName.value,userRoll.value,title.value,id,time],[subject.value]]
+    console.log(data)
+    google.script.run.withSuccessHandler(UpSucces).dataUp(data);
+    document.getElementById('welcome').hidden = true;
+
+  }
+
+  function UpSucces(){
+    alert("✔️ Successfully uploaded")
+    document.getElementById('saveBt').disabled = true;
+    document.getElementById('welcome').hidden = true;
+  }
+
+
+
+
+
+
+
+
+
+</script>
